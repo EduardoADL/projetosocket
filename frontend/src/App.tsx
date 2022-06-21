@@ -11,7 +11,12 @@ function App() {
 
     if (!socket) return
 
-    socket.emit('message:send', message)
+    socket.emit('message:send', message, (response:any) =>{
+
+       alert(response)
+
+    })
+
 
     console.log(message)
   }

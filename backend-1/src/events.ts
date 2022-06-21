@@ -16,5 +16,5 @@ export interface IServerEvents {
 }
 
 export interface IClientEvents {
-  'message:send': (message: string) => void
+  'message:send': (message: string, callback:any) => void
 }
