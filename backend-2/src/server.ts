@@ -23,7 +23,8 @@ io.on('connection', socket => {
   console.log('connected')
 
   socket.on('message:repass', (message, callback) => {
-    banco.run(`insert into message(message) values ('${message}') `)
+    const obj = JSON.parse(message)
+    banco.run(`insert into message(message, coordX, coordY) values ('${obj.message}', '${obj.coordX}', '${obj.coordY}') `)
     console.log('backend 2', message)
     callback('chegou aqui')
   })
@@ -31,7 +32,7 @@ io.on('connection', socket => {
 
 httpServer.on('listening', () => {
   // banco.run('drop table if exists message')
-  banco.run('create table if not exists message(id integer primary key  autoincrement , message varchar not null)')
+  banco.run('create table if not exists message(id integer primary key  autoincrement , message varchar(512) not null, coordX varchar not null, coordY varchar not null)')
 })
 
 httpServer.listen(port, () => console.log(`Running on port: ${port}`))

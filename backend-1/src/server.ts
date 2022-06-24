@@ -1,6 +1,5 @@
 import express from 'express'
 import { createServer } from 'http'
-import { func } from 'joi'
 import { Server } from 'socket.io'
 import { io } from 'socket.io-client'
 import sqlite3 from 'sqlite3'
@@ -16,9 +15,9 @@ const server = new Server<IClientEvents, IServerEvents>(httpServer, {
 })
 const backend_2 = io('http://localhost:5001')
 
-// app.get('/', (req, res) => {
-//   res.sendFile(__dirname + '/index.html')
-// })
+backend_2.on('disconnect',()=>{
+  console.log('desconectado')
+})
 
 backend_2.on('connect',()=>{
   if(fila.length > 0){
@@ -30,7 +29,8 @@ backend_2.on('connect',()=>{
           console.log('fila: ', fila)
         }
         else {
-          fila.pop()
+          const obj = JSON.parse(fila.shift())
+          server.emit("message:success",  obj.message + " gravado com sucesso ");
           console.log(fila.length)
         }
       })
@@ -38,28 +38,24 @@ backend_2.on('connect',()=>{
   }
 })
 
-backend_2.on('disconnect',()=>{
-  console.log('desconectado')
-})
-
 server.on('connection', socket => {
   console.log('connected')
-
-
   /* A -> B */
   socket.on('message:send', (message, callback) => {
     console.log('backend 1', message)
 
-    banco.run(`insert into message(message) values ('${message}') `)
+    const obj = JSON.parse(message)
+
+    banco.run(`insert into message(message, coordX, coordY) values ('${obj.message}', '${obj.coordX}', '${obj.coordY}') `)
 
     
     /* B -> C */
-    passarback(message, callback)
+    enviarSegundoDB(message, callback)
 
   })
 })
 
-  function passarback (message:any, callback?:any){
+  function enviarSegundoDB (message:any, callback?:any){
     backend_2.timeout(1000).emit('message:repass', message, (
       err: any, response: any) => {
       if (err) {
@@ -76,6 +72,6 @@ server.on('connection', socket => {
 
 httpServer.on('listening', () => {
   // banco.run('drop table if exists message')
-  banco.run('create table if not exists message(id integer primary key  autoincrement , message varchar not null)')
+  banco.run('create table if not exists message(id integer primary key  autoincrement , message varchar(512) not null, coordX varchar not null, coordY varchar not null)')
 })
 httpServer.listen(port, () => console.log(`Running on port: ${port}`))
